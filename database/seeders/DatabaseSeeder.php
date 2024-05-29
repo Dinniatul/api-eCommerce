@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +26,8 @@ class DatabaseSeeder extends Seeder
                 'phone' => '1234567890',
                 'address' => '123 Admin Street',
                 'role' => 'admin',
-            ]
+                'email_verified_at' => Carbon::now(), // Add this line
+            ],
 
             // Tambahkan lebih banyak pengguna jika diperlukan
         ]);
