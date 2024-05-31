@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +30,5 @@ Route::get('category', [CategoriesController::class, 'index']);
 Route::post('category-tambah', [CategoriesController::class, 'store']);
 Route::put('category-edit/{id}', [CategoriesController::class, 'update']);
 Route::delete('category-edit/{id}', [CategoriesController::class, 'destroy']);
+
+Route::post('produk-tambah', [ProductController::class, 'store']);
