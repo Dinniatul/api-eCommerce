@@ -17,12 +17,24 @@ class CategoriesController extends Controller
     public function index()
     {
         $categories = Categories::all();
+
+        // Jika tidak ada kategori
+        if ($categories->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data kategori kosong',
+                'categories' => []
+            ], 200);
+        }
+
+        // Jika ada kategori
         return response()->json([
             'status' => true,
             'message' => 'Data kategori berhasil ditampilkan',
             'categories' => $categories
-        ]);
+        ], 200);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -100,9 +112,37 @@ class CategoriesController extends Controller
      * @param  \App\Models\Categories  $categories
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Categories $categories)
+    public function update(Request $request, $id)
     {
-        //
+        $categories = Categories::find($id);
+        $validator = Validator::make($request->all(), [
+            'category_name' => 'required',
+            'description' => 'required',
+
+        ], [
+            'category_name.required' => 'Kategori tidak boleh kosong',
+            'description.required' => " Deskripsi tidak boleh kosong",
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => "Proses Update kategori gagal",
+                'data' => $validator->errors()
+            ], 401);
+        }
+
+        $categories->update([
+            'category_name' => $request->input('category_name'),
+            'description' => $request->input('description'),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Kategori berhasil diupdate',
+            'data' => $categories
+        ], 200);
     }
 
     /**
@@ -111,8 +151,13 @@ class CategoriesController extends Controller
      * @param  \App\Models\Categories  $categories
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Categories $categories)
+    public function destroy($id)
     {
-        //
+        $categories = Categories::find($id);
+        $categories->delete();
+        return response()->json([
+            'status' => true,
+            'message' => 'Kategori Berhasil dihapus'
+        ], 200);
     }
 }

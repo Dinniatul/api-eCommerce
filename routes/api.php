@@ -25,4 +25,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('/send-verification-code', [AuthController::class, 'sendVerificationCode']);
 Route::post('/verify-code', [AuthController::class, 'verifyCode']);
 
+Route::get('category', [CategoriesController::class, 'index']);
 Route::post('category-tambah', [CategoriesController::class, 'store']);
+Route::put('category-edit/{id}', [CategoriesController::class, 'update']);
+Route::delete('category-edit/{id}', [CategoriesController::class, 'destroy']);
