@@ -12,15 +12,17 @@ class CreateOrdersTable extends Migration
      * @return void
      */
     public function up()
-{
-    Schema::create('orders', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->decimal('total', 10, 2);
-        $table->string('status');
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->integer('quantity');
+            $table->decimal('Subtotal', 10, 2);
+            $table->enum('status', ['Sudah Dibayar', 'Belum Dibayar']);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
