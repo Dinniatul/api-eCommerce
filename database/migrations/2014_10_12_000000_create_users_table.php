@@ -23,7 +23,7 @@ class CreateUsersTable extends Migration
             $table->string('last_name')->nullable();
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->text('role')->nullable();
+            $table->enum('role',['admin','customer'])->nullable();
             $table->timestamps();
         });
     }
