@@ -28,6 +28,17 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
                 'email_verified_at' => Carbon::now(), // Add this line
             ],
+            [
+                'username' => 'customer1',
+                'email' => 'customer1@gmail.com',
+                'password' => Hash::make('customer1'),
+                'first_name' => 'Customer',
+                'last_name' => 'Satu',
+                'phone' => '1234567810',
+                'address' => '123 Admin Street',
+                'role' => 'customer',
+                'email_verified_at' => Carbon::now(), // Add this line
+            ],
 
             // Tambahkan lebih banyak pengguna jika diperlukan
         ]);
