@@ -29,7 +29,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        return view('product.index');
+        $category = Categories::all();
+        return view('product.index',['category'=>$category]);
     }
 
     /**

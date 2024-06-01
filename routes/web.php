@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController\AuthController;
 use App\Http\Controllers\AdminController\CategoriesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController\UserController;
@@ -16,7 +17,12 @@ use App\Http\Controllers\AdminController\UserController;
 |
 */
 
-Route::get('/', [UserController::class, 'index'])->name('/');
+Route::get('/', [AuthController::class, 'login'])->name('/');
+Route::get('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/register', [AuthController::class, 'register_action']);
+Route::get('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/login', [AuthController::class, 'login_action']);
+
 
 Route::get('user.index', [UserController::class, 'index'])->name('user.index');
 Route::get('user.create', [UserController::class, 'create'])->name('user.create');
