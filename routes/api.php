@@ -33,3 +33,5 @@ Route::delete('category-edit/{id}', [CategoriesController::class, 'destroy']);
 
 Route::get('produk', [ProductController::class, 'index']);
 Route::post('produk-tambah', [ProductController::class, 'store']);
+Route::put('produk-edit/{id}', [ProductController::class, 'update']);
+Route::delete('produk-hapus/{id}', [ProductController::class, 'destroy']);
