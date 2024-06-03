@@ -59,7 +59,7 @@ class AuthController extends Controller
             'last_name' => 'required',
             'phone' => 'required',
             'address' => 'required',
-            'role' => 'required'
+            'role' => 'nullable'
         ], [
             'username.required' => 'Username tidak boleh kosong',
             'username.unique' => 'Username sudah ada, silahkan buat username yang lain',
