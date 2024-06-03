@@ -23,24 +23,27 @@ class UserController extends Controller
     }
 
 
-    public function store(Request $request){
+    public function store(Request $request)
+{
+    $validateData = $request->validate([
+        'username' => 'required|unique:users',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:8', // Ensure the password is secure
+        'first_name' => 'required',
+        'last_name' => 'required',
+        'phone' => 'required',
+        'address' => 'required',
+        'role' => 'required',
+    ]);
 
-        $validateData = $request->validate([
-            'username'=>'required',
-            'email'=>'required',
-            'password'=>'required',
-            'first_name'=>'required',
-            'last_name'=>'required',
-            'phone'=>'required',
-            'address'=>'required',
-            'role'=>'required',
-        ]);
+    // Hash the password before storing
+    $validateData['password'] = bcrypt($validateData['password']);
 
-        User::create($validateData);
+    User::create($validateData);
 
-        return redirect()->route('user.index')->with('success','Data Berhasil di Tambahkan');
+    return redirect()->route('user.index')->with('success', 'Data Berhasil di Tambahkan');
+}
 
-    }
 
     public function edit(User $user){
 
@@ -51,15 +54,17 @@ class UserController extends Controller
     public function update(Request $request, User $user){
 
         $validateData = $request->validate([
-            'username'=>'required',
-            'email'=>'required',
-            'password'=>'required',
-            'first_name'=>'required',
-            'last_name'=>'required',
-            'phone'=>'required',
-            'address'=>'required',
-            'role'=>'required',
+            'username' => 'required|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8', // Ensure the password is secure
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'phone' => 'required',
+            'address' => 'required',
+            'role' => 'required',
         ]);
+
+        $validateData['password'] = bcrypt($validateData['password']);
 
         $user->update($validateData);
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,8 +22,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/', function () {
+    return response()->json([
+        'status' => false,
+        'message' => 'akses tidak ditemukan'
+    ], 401);
+})->name('login');
+
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::put('user-update', [AuthController::class, 'updateUser']);
 Route::post('/send-verification-code', [AuthController::class, 'sendVerificationCode']);
 Route::post('/verify-code', [AuthController::class, 'verifyCode']);
 
@@ -35,3 +44,7 @@ Route::get('produk', [ProductController::class, 'index']);
 Route::post('produk-tambah', [ProductController::class, 'store']);
 Route::put('produk-edit/{id}', [ProductController::class, 'update']);
 Route::delete('produk-hapus/{id}', [ProductController::class, 'destroy']);
+
+Route::get('order', [OrderController::class, 'index'])->middleware('auth:sanctum');
+Route::post('order-tambah', [OrderController::class, 'store'])->middleware('auth:sanctum');
+Route::put('order-edit/{id}', [OrderController::class, 'update'])->middleware('auth:sanctum');
