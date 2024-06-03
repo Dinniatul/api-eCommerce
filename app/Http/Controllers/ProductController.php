@@ -91,7 +91,7 @@ class ProductController extends Controller
             'description' => $request->input('description'),
             'price' => $request->input('price'),
             'stock' => $request->input('stock'),
-            'category_id' => $request->input('stock'),
+            'category_id' => $request->input('category_id'),
         ]);
 
         $products->category = $products->category;
@@ -187,6 +187,8 @@ class ProductController extends Controller
             'data' => $product
         ]);
     }
+
+    
 
     /**
      * Remove the specified resource from storage.
