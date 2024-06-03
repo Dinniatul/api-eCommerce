@@ -31,7 +31,7 @@ Route::get('/', function () {
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
-Route::put('user-update', [AuthController::class, 'updateUser']);
+Route::put('user-update/{id}', [AuthController::class, 'updateUser']);
 Route::post('/send-verification-code', [AuthController::class, 'sendVerificationCode']);
 Route::post('/verify-code', [AuthController::class, 'verifyCode']);
 
