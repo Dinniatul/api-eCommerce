@@ -74,7 +74,7 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Berhasil login',
             'email' => $user->email,
-            // 'token' => $user->createToken('api-kejaksaan')->plainTextToken,
+            'token' => $user->createToken('api-eCommerce')->plainTextToken,
             'role' => $user->role // Ambil peran pengguna dari objek $user
         ]);
     }
