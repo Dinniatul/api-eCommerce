@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->foreignId('category_id')->onDelete('cascade');
             $table->string('product_name');
             $table->string('image');
-            $table->decimal('price', 10, 2);
+            $table->decimal('price', 10, 3);
             $table->integer('stock');
             $table->text('description')->nullable();
             $table->timestamps();
