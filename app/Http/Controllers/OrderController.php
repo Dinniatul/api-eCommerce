@@ -35,16 +35,17 @@ class OrderController extends Controller
     {
         if (Auth::user()->role === 'admin') {
             // Admin: Menampilkan semua pesanan
-            $orders = Order::all();
+            $orders = Order::with(['user', 'product'])->get();
         } else {
             // Pelanggan: Menampilkan hanya pesanan mereka sendiri
-            $orders = Order::where('user_id', Auth::id())->get();
+            $orders = Order::with(['user', 'product'])->where('user_id', Auth::id())->get();
         }
 
-        // $orders->transform(function ($order) {
-        //     $order->subTotal = $this->formatRupiah($order->subTotal);
-        //     return $order;
-        // });
+        // Format subTotal menggunakan formatRupiah
+        $orders->transform(function ($order) {
+            $order->subTotal = $this->formatRupiah($order->subTotal);
+            return $order;
+        });
 
         return response()->json([
             'status' => true,
@@ -52,6 +53,7 @@ class OrderController extends Controller
             'data' => $orders
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
