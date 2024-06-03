@@ -52,8 +52,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'username' => 'required|unique:user',
-            'email' => 'required|unique:user',
+            'username' => 'required|unique:users',
+            'email' => 'required|unique:users',
             'password' => 'required|min:8',
             'first_name' => 'required',
             'last_name' => 'required',
@@ -71,7 +71,8 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Register gagal'
+                'message' => 'Register gagal',
+                'data' => $validator->errors()
             ], 400);
         }
 
@@ -122,9 +123,9 @@ class AuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Berhasil login',
-            'email' => $user->email,
+            // 'email' => $user->email,
             'token' => $user->createToken('api-eCommerce')->plainTextToken,
-            'role' => $user->role // Ambil peran pengguna dari objek $user
+            'data' => $user // Ambil peran pengguna dari objek $user
         ], 200);
     }
 
@@ -143,7 +144,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8|confirmed',
+            'password' => 'sometimes|string|min:8',
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
