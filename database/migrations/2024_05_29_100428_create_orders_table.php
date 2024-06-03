@@ -18,7 +18,7 @@ class CreateOrdersTable extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->integer('quantity');
-            $table->decimal('Subtotal', 10, 2);
+            $table->decimal('subTotal', 10, 3);
             $table->enum('status', ['Sudah Dibayar', 'Belum Dibayar']);
             $table->timestamps();
         });
