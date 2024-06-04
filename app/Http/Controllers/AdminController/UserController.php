@@ -51,24 +51,31 @@ class UserController extends Controller
         
     }
 
-    public function update(Request $request, User $user){
-
+    public function update(Request $request, User $user)
+    {
         $validateData = $request->validate([
-            'username' => 'required|unique:users',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8', // Ensure the password is secure
+            'username' => 'required|unique:users,username,' . $user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:8', // Password is optional during update
             'first_name' => 'required',
             'last_name' => 'required',
             'phone' => 'required',
             'address' => 'required',
             'role' => 'required',
         ]);
-
-        $validateData['password'] = bcrypt($validateData['password']);
-
+    
+        // Hash the password only if it is provided
+        if ($request->filled('password')) {
+            $validateData['password'] = bcrypt($request->password);
+        } else {
+            // Remove the password key from the validated data
+            unset($validateData['password']);
+        }
+    
+        // Update the user with the validated data
         $user->update($validateData);
-
-        return redirect()->route('user.index')->with('success','Data Berhasil di Ubah');
+    
+        return redirect()->route('user.index')->with('success', 'Data Berhasil di Ubah');
     }
 
     public function destroy(User $user){
