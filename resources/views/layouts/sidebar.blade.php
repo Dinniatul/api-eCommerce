@@ -12,7 +12,7 @@
                         <div class="sb-nav-link-icon"><i class="fas fa-solid fa-list"></i></div>
                         Categories
                     </a>
-                    <a class="nav-link" href="index.html">
+                    <a class="nav-link" href="{{route('product.index')}}">
                         <div class="sb-nav-link-icon"><i class="fas fa-solid fa-shop"></i></div>
                         Product
                     </a>

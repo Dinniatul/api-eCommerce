@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController\AuthController;
 use App\Http\Controllers\AdminController\CategoriesController;
+use App\Http\Controllers\AdminController\ProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController\UserController;
 
@@ -37,3 +38,11 @@ Route::post('category/store', [CategoriesController::class, 'store'])->name('cat
 Route::get('category/{categories}/edit', [CategoriesController::class, 'edit'])->name('category.edit');
 Route::put('category/{categories}', [CategoriesController::class, 'update'])->name('category.update');
 Route::delete('category/{categories}', [CategoriesController::class, 'destroy'])->name('category.destroy');
+
+
+Route::get('product.index', [ProductController::class, 'index'])->name('product.index');
+Route::get('product.create', [ProductController::class, 'create'])->name('product.create');
+Route::post('product/store', [ProductController::class, 'store'])->name('product.store');
+Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('product.edit');
+Route::put('product/{product}', [ProductController::class, 'update'])->name('product.update');
+Route::delete('product/{product}', [ProductController::class, 'destroy'])->name('product.destroy');

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\AdminController;
 
-use App\Models\Categories;
 use App\Models\Product;
+use App\Models\Categories;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -30,7 +31,7 @@ class ProductController extends Controller
     public function create()
     {
         $category = Categories::all();
-        return view('product.index',['category'=>$category]);
+        return view('product.create',['category'=>$category]);
     }
 
     /**
@@ -41,62 +42,33 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $category = Categories::all();
-        $validator = Validator::make($request->all(), [
+        $validateData = $request->validate([
             'product_name' => 'required',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:2048', // Added max size validation
             'description' => 'required',
-            'price' => 'required',
-            'stock' => 'required',
-            'category_id' => 'required',
-
-        ], [
-            'product_name.required' => 'Nama Produk tidak boleh kosong',
-            // 'image.image' => 'Harus Gambar',
-            'description.required' => 'Deskripsi tidak boleh kosong',
-            'price.required' => 'Harga tidak boleh kosong',
-            'stock.required' => 'Stok tidak boleh kosong',
-            'category_id.required' => 'Harus pilih Kategori',
+            'price' => 'required|numeric', // Ensured price is numeric
+            'stock' => 'required|integer', // Ensured stock is integer
+            'category_id' => 'required|exists:categories,id', // Ensured category exists in the database
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Produk gagal ditambahkan',
-                'data' => $validator->errors()
-            ], 422);
-        }
-
+    
+        // Store the image and get its filename
         $image = $request->file('image');
-        $nama_file = time() . '_' . $image->getClientOriginalName();
-        $lokasi_file = public_path('/image');
-        $image->move($lokasi_file, $nama_file);
-
-
-
-        $products = Product::create([
-            'product_name' => $request->input('product_name'),
-            'image' => public_path('images/' . $nama_file),
-            'description' => $request->input('description'),
-            'price' => $request->input('price'),
-            'stock' => $request->input('stock'),
-            'category_id' => $request->input('stock'),
+        $imagePath = $image->storeAs('public/images', $image->hashName());
+    
+        // Create the product with the validated data and stored image filename
+        Product::create([
+            'product_name' => $validateData['product_name'],
+            'image' => $image->hashName(),
+            'description' => $validateData['description'],
+            'price' => $validateData['price'],
+            'stock' => $validateData['stock'],
+            'category_id' => $validateData['category_id'],
         ]);
-
-        $products->category = $products->category;
-        return response()->json([
-            'status' => true,
-            'message' => 'Produk berhasil ditambahkan',
-            'data' => $products
-        ]);
+    
+        // Redirect to the product index with a success message
+        return redirect()->route('product.index')->with('success', 'Product created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
     public function show(Product $product)
     {
         //
@@ -110,20 +82,36 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        //
+        $category = Categories::all();
+        return view('product.edit',['product'=>$product,'category'=>$category]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
+
     public function update(Request $request, Product $product)
-    {
-        //
+{
+    $validateData = $request->validate([
+        'product_name' => 'required',
+        'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // Added max size validation
+        'description' => 'required',
+        'price' => 'required|numeric', // Ensured price is numeric
+        'stock' => 'required|integer', // Ensured stock is integer
+        'category_id' => 'required|exists:categories,id', // Ensured category exists in the database
+    ]);
+
+    // If a new image is uploaded, store it and set the image path
+    if ($request->hasFile('image')) {
+        $image = $request->file('image');
+        $imagePath = $image->storeAs('public/images', $image->hashName());
+        $validateData['image'] = $image->hashName();
     }
+
+    // Update the product with the validated data
+    $product->update($validateData);
+
+    // Redirect to the product index with a success message
+    return redirect()->route('product.index')->with('success', 'Product updated successfully.');
+}
+
 
     /**
      * Remove the specified resource from storage.
@@ -131,8 +119,10 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
-    {
-        //
+    public function destroy(Product $product){
+
+        $product->delete();
+        return redirect()->route('product.index')->with('success','Data Berhasil di Hapus');
+        
     }
 }
