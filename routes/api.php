@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -38,7 +39,7 @@ Route::post('/verify-code', [AuthController::class, 'verifyCode']);
 Route::get('category', [CategoriesController::class, 'index']);
 Route::post('category-tambah', [CategoriesController::class, 'store']);
 Route::put('category-edit/{id}', [CategoriesController::class, 'update']);
-Route::delete('category-edit/{id}', [CategoriesController::class, 'destroy']);
+Route::delete('category-hapus/{id}', [CategoriesController::class, 'destroy']);
 
 Route::get('produk', [ProductController::class, 'index']);
 Route::post('produk-tambah', [ProductController::class, 'store']);
@@ -48,3 +49,6 @@ Route::delete('produk-hapus/{id}', [ProductController::class, 'destroy']);
 Route::get('order', [OrderController::class, 'index'])->middleware('auth:sanctum');
 Route::post('order-tambah', [OrderController::class, 'store'])->middleware('auth:sanctum');
 Route::put('order-edit/{id}', [OrderController::class, 'update'])->middleware('auth:sanctum');
+
+Route::post('add-toCart', [CartController::class, 'addToCart'])->middleware('auth:sanctum');
+Route::post('checkout', [CartController::class, 'checkout'])->middleware('auth:sanctum');
