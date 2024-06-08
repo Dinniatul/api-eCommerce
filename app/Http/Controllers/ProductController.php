@@ -80,7 +80,7 @@ class ProductController extends Controller
 
         $image = $request->file('image');
         $nama_file = time() . '_' . $image->getClientOriginalName();
-        $lokasi_file = public_path('/image');
+        $lokasi_file = public_path('/public/images');
         $image->move($lokasi_file, $nama_file);
 
 
