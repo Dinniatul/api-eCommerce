@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -33,17 +34,12 @@ class OrderController extends Controller
     // }
     public function index(Request $request)
     {
-        if (Auth::user()->role === 'admin') {
-            // Admin: Menampilkan semua pesanan
-            $orders = Order::with(['user', 'product'])->get();
-        } else {
-            // Pelanggan: Menampilkan hanya pesanan mereka sendiri
-            $orders = Order::with(['user', 'product'])->where('user_id', Auth::id())->get();
-        }
+        // Mendapatkan pesanan berdasarkan pengguna yang membuatnya
+        $orders = Order::with(['user', 'cart.product'])->where('user_id', auth()->id())->get();
 
-        // Format subTotal menggunakan formatRupiah
+        // Mengonversi total pembayaran ke dalam format Rupiah
         $orders->transform(function ($order) {
-            $order->subTotal = $this->formatRupiah($order->subTotal);
+            $order->totalPayment = $this->formatRupiah($order->totalPayment);
             return $order;
         });
 
@@ -53,6 +49,7 @@ class OrderController extends Controller
             'data' => $orders
         ]);
     }
+
 
 
     /**
@@ -71,52 +68,161 @@ class OrderController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
+    // public function store(Request $request)
+    // {
+    //     // Validate the request
+    //     $validator = Validator::make($request->all(), [
+    //         'cart_id' => 'required|array|min:1',
+    //         'cart_id.*' => 'exists:cart,id',  // Corrected here
+    //     ]);
+
+    //     // Check if the validation fails
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     // Retrieve the cart items
+    //     $cartItems = Cart::whereIn('id', $request->input('cart_id'))
+    //         ->where('user_id', auth()->id())
+    //         ->get();
+
+    //     if ($cartItems->isEmpty()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'No valid cart items found'
+    //         ], 404);
+    //     }
+
+
+    //     // Calculate the total payment
+    //     $totalPayment = $cartItems->sum('totalPrice');
+
+    //     // Create a new order
+    //     $order = Order::create([
+    //         'user_id' => auth()->id(),
+    //         'cart_id' => $request->input('cart_id')[0],
+    //         'totalPayment' => $totalPayment,
+    //         'status' => 'Belum Dibayar'
+    //     ]);
+
+    //     // Attach cart items to the order
+    //     foreach ($cartItems as $cartItem) {
+    //         $cartItem->update(['order_id' => $order->id]);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Order berhasil dibuat',
+    //         'data' => $order
+    //     ]);
+    // }
+
+
+
+
     public function store(Request $request)
     {
+        // dd($request->all());
+
+        // dd($request->cart_id);
+        // Validate the request
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'status' => 'sometimes|string',
+            'cart' => 'required|array|min:1',
+            'cart.*' => 'exists:cart,id',  // Validate against 'carts' table
         ]);
 
+        // Check if the validation fails
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => $validator->errors()
-            ], 400);
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $product = Product::find($request->product_id);
+        // Retrieve the cart items
+        $cartItems = Cart::whereIn('id', $request->input('cart'))
+            ->where('user_id', auth()->id())
+            ->get();
 
-        if ($product->stock < $request->quantity) {
+        if ($cartItems->isEmpty()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Stock is not enough'
-            ], 400);
+                'message' => 'No valid cart items found'
+            ], 404);
         }
 
-        $subTotal = $request->quantity * $product->price;
+        // Calculate the total payment
+        $totalPayment = $cartItems->sum('totalPrice');
 
-        $order = new Order();
-        $order->user_id = auth()->id();  // Get the ID of the authenticated user
-        $order->product_id = $request->product_id;
-        $order->quantity = $request->quantity;
-        $order->subTotal = $subTotal;
-        $order->status = 'Belum Dibayar';
-        $order->save();
+        // Format total payment to Indonesian Rupiah
+        $formattedTotalPayment = $this->formatRupiah($totalPayment);
+        // Create a new order
+        foreach ($request->cart as $value) {
+            // dd($value);
+            $order = Order::create([
+                'user_id' => auth()->id(),
+                'cart_id' => $value['cart_id'], // Set the cart_id here
+                'totalPayment' => $totalPayment, // Total payment in decimal format
+                'status' => 'Belum Dibayar'
+            ]);
+        }
 
-        // Update product stock
-        $product->stock -= $request->quantity;
-        $product->save();
 
-        $order->subTotal = $this->formatRupiah($order->subTotal);
+        // Attach cart items to the order
+        foreach ($cartItems as $cartItem) {
+            $cartItem->update(['order_id' => $order->id]);
+        }
 
         return response()->json([
             'status' => true,
             'message' => 'Order berhasil dibuat',
-            'data' => $order
-        ], 201);
+            'data' => [
+                'order' => $order,
+                
+            ]
+        ]);
     }
+
+
+
+
+
+
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'cart_id' => 'required|exists:cart,id',
+    //         'status' => 'required|in:Sudah Dibayar,Belum Dibayar',
+    //     ]);
+
+    //     $user_id = Auth::id();
+
+    //     // Retrieve the cart and ensure it belongs to the authenticated user
+    //     $cart = Cart::where('id', $request->cart_id)
+    //         ->where('user_id', $user_id)
+    //         ->firstOrFail();
+
+    //     // Get the total price from the cart
+    //     $totalPayment = $cart->totalPrice;
+
+    //     // Create the order
+    //     $order = Order::create([
+    //         'user_id' => auth()->id(),
+    //         'cart_id' => $request->cart_id,
+    //         'totalPayment' => $totalPayment,
+    //         'status' => $request->status,
+    //     ]);
+
+    //     return response()->json([
+    //         'message' => 'Order created successfully',
+    //         'order' => $order,
+    //     ], 201);
+    // }
+
 
     /**
      * Display the specified resource.
@@ -124,14 +230,7 @@ class OrderController extends Controller
      * @param  \App\Models\Order  $order
      * @return \Illuminate\Http\Response
      */
-    public function show(Order $order)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => 'Data order berhasil ditampilkan',
-            'data' => $order
-        ]);
-    }
+
 
     /**
      * Show the form for editing the specified resource.
