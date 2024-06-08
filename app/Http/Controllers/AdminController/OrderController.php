@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\AdminController;
 
+use App\Models\Cart;
+use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -11,89 +13,46 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    // public function index()
-    // {
-    //     // $orders = Order::with(['user', 'product'])->get();
-    //     // $orders->transform(function ($order) {
-    //     //     $order->subTotal = $this->formatRupiah($order->subTotal);
-    //     //     return $order;
-    //     // });
-
-    //     // return response()->json([
-    //     //     'status' => true,
-    //     //     'message' => 'Data order berhasil ditampilkan',
-    //     //     'data' => $orders
-    //     // ]);
-
-    //     $user = auth()->
-    // }
-    public function index(Request $request)
+   
+   
+    public function index()
     {
-        if (Auth::user()->role === 'admin') {
-            // Admin: Menampilkan semua pesanan
-            $orders = Order::with(['user', 'product'])->get();
-        } else {
-            // Pelanggan: Menampilkan hanya pesanan mereka sendiri
-            $orders = Order::with(['user', 'product'])->where('user_id', Auth::id())->get();
-        }
+        $order = Order::latest()->get();
 
-        // Format subTotal menggunakan formatRupiah
-        $orders->transform(function ($order) {
-            $order->subTotal = $this->formatRupiah($order->subTotal);
-            return $order;
-        });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Data pesanan berhasil ditampilkan',
-            'data' => $orders
-        ]);
+        return view('order.index',['order'=>$order]);
     }
 
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
+        $user = User::all();
+        $product = Product::all();
+        return view('product.create',['user'=>$user,'product'=>$product]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'status' => 'sometimes|string',
         ]);
 
         if ($validator->fails()) {
-            return back()->with('failed','order failed');
+            return back()->with('failed', 'Order failed');
         }
 
         $product = Product::find($request->product_id);
 
         if ($product->stock < $request->quantity) {
-            return back()->with('stock','stock is low');
+            return back()->with('stock', 'Stock is low');
         }
 
         $subTotal = $request->quantity * $product->price;
 
         $order = new Order();
-        $order->user_id = auth()->id();  // Get the ID of the authenticated user
+        $order->user_id = $request->user_id;
         $order->product_id = $request->product_id;
         $order->quantity = $request->quantity;
         $order->subTotal = $subTotal;
@@ -104,21 +63,38 @@ class OrderController extends Controller
         $product->stock -= $request->quantity;
         $product->save();
 
-        $order->subTotal = $this->formatRupiah($order->subTotal);
-
-        return back()->with('order','order is success');
-    }
-
-    private function codeUnique()
-    {
-        $uniqueCode = substr(md5(uniqid(mt_rand(), true)), 0, 8);
-        return strtoupper($uniqueCode);
+        return redirect()->route('admin.orders.index')->with('success', 'Order created successfully.');
     }
 
 
-    public function storeCart(Request $request)
+    // public function store(Request $request)
+    // {
+    //     $carts = Cart::all();
+
+    //     if ($carts->isEmpty()) {
+    //         return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+    //     }
+
+    //     foreach ($carts as $cart) {
+    //         Order::create([
+    //             'user_id' => $cart->user_id,
+    //             'product_id' => $cart->product_id,
+    //             'quantity' => $cart->quantity,
+    //             'subTotal' => $cart->product->price * $cart->quantity,
+    //             'status' => 'Belum Dibayar',
+    //         ]);
+    //     }
+
+    //     Cart::where('user_id', Auth::id())->delete();
+
+    //     return redirect()->route('order.index')->with('success', 'Order placed successfully.');
+    // }
+
+
+
+
+    public function storeCart(Request $request) 
     {
-        $code = $this->codeUnique();
        
         foreach ($request->data as $item) {
 
@@ -145,7 +121,6 @@ class OrderController extends Controller
             $order->quantity = $item->quantity;
             $order->subTotal = $subTotal;
             $order->status = 'Belum Dibayar';
-            $order->transaction_code = $code;
             $order->save();
     
             // Update product stock
@@ -160,12 +135,6 @@ class OrderController extends Controller
     }
 
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
     public function show(Order $order)
     {
         return response()->json([
@@ -175,24 +144,13 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
+ 
     public function edit(Order $order)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
+
     public function update(Request $request, $id)
     {
         $order = Order::find($id);
