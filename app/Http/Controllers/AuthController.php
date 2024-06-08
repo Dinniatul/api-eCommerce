@@ -16,7 +16,7 @@ class AuthController extends Controller
     //     $request->validate([
     //         'username' => 'required|string|max:255|unique:users',
     //         'email' => 'required|string|email|max:255|unique:users',
-    //         'password' => 'required|string|min:8|confirmed',
+    //         'password' => 'required|string|min:8',
     //         'first_name' => 'string|max:255|nullable',
     //         'last_name' => 'string|max:255|nullable',
     //         'phone' => 'string|max:20|nullable',
@@ -63,6 +63,7 @@ class AuthController extends Controller
         ], [
             'username.required' => 'Username tidak boleh kosong',
             'username.unique' => 'Username sudah ada, silahkan buat username yang lain',
+            'email.unique' => 'Email sudah digunakan, silahkan gunakan email yang lain',
             'password.required' => ' Password tidak boleh kosong',
             'password.min' => 'Password minimal 8 karakter',
 
@@ -79,7 +80,7 @@ class AuthController extends Controller
         $user = User::create([
             'username' => $request->input('username'),
             'email' => $request->input('email'),
-            'password' => $request->input('password'),
+            'password' => Hash::make($request->password),
             'first_name' => $request->input('first_name'),
             'last_name' => $request->input('last_name'),
             'phone' => $request->input('phone'),
@@ -119,14 +120,19 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // Tambahkan peran pengguna ke dalam respons JSON
         return response()->json([
             'status' => true,
             'message' => 'Berhasil login',
-            // 'email' => $user->email,
+            'email' => $user->email,
             'token' => $user->createToken('api-eCommerce')->plainTextToken,
-            'data' => $user // Ambil peran pengguna dari objek $user
-        ], 200);
+            'role' => $user->role, // Ambil peran pengguna dari objek $user
+            'username' => $user->username,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'address' => $user->address,
+            'phone' => $user->phone,
+            'id' => $user->id,
+        ]);
     }
 
 
