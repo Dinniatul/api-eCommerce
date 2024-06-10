@@ -1,60 +1,96 @@
 @extends('layouts.main')
 @section('container')
-
-<div class="card mb-4">
-    <div class="card-header">
-        <i class="fas fa-table me-1"></i>
-        DataTable Product
-    </div>
-    <div class="card-body">
-        <div class="panel-body">
-            <a href="{{route('product.create')}}" class="btn btn-md btn-success mb-3">TAMBAH DATA</a>
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Konfirmasi Status Pembayaran
         </div>
-        <div class="table-responsive w-100">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                <thead>
-                    <th class="text-center">No</th>
-                    <th class="text-center">User</th>
-                    <th class="text-center">Product</th>
-                    <th class="text-center">Description</th>
-                    <th class="text-center">Quantity</th>
-                    <th class="text-center">Subtotal</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-center">Aksi</th>
-                </thead>
-                <tbody>
-                    @php
-                        $no = 1;
-                    @endphp
-                    @forelse ($products as $data)
+        <div class="card-body">
+            <div class="table-responsive w-100">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
                         <tr>
-                            <td class="text-center">{{ $no++}}</td>
-                            <td class="text-center">{{ $data->user->name}}</td>
-                            <td class="text-center">{{ $data->product->product_name}}</td>
-                            <td class="text-center">{{ $data->quantity}}</td>
-                            <td class="text-center">{{ $data->subtotal}}</td>
-                            <td class="text-center">{{ $data->status}}</td>
-                            <td class="text-center">
-                                <a href="{{route('product.edit',['product'=>$data->id])}}" class="btn btn-warning btn-circle">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </a>
-                                <form onsubmit="return confirm('Apakah Anda Yakin ?');" action="{{route('product.destroy', ['product'=>$data->id])}}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-danger btn-circle">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
-                                
-                            </td>
+                            <th class="text-center">No</th>
+                            <th class="text-center">Nama Customer</th>
+                            <th class="text-center">Total Pembayaran</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
-                    @empty
-                        
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @php
+                            $no = 1;
+                        @endphp
+                        @forelse ($order as $data)
+                            <tr>
+                                <td class="text-center">{{ $no++ }}</td>
+                                <td class="text-center">{{ $data->user->first_name }} {{ $data->user->last_name }}</td>
+                                <td class="text-center">{{ $data->totalPayment }}</td>
+                                <td class="text-center">{{ $data->status }}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning btn-circle" data-bs-toggle="modal"
+                                        data-bs-target="#editStatusModal-{{ $data->id }}">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <form onsubmit="return confirm('Apakah Anda Yakin ?');" action="" method="POST"
+                                        style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-danger btn-circle">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Status Modal -->
+                            <div class="modal fade" id="editStatusModal-{{ $data->id }}" tabindex="-1"
+                                aria-labelledby="editStatusModalLabel-{{ $data->id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editStatusModalLabel-{{ $data->id }}">Edit
+                                                Status Pembayaran</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <form action="{{ route('order.update', $data->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="status-{{ $data->id }}"
+                                                        class="form-label">Status</label>
+                                                    <select class="form-select" id="status-{{ $data->id }}"
+                                                        name="status">
+                                                        <option value="Belum Dibayar"
+                                                            {{ $data->status == 'Belum Dibayar' ? 'selected' : '' }}>Belum
+                                                            Dibayar
+                                                        </option>
+                                                        <option value="Sudah Dibayar"
+                                                            {{ $data->status == 'Sudah Dibayar' ? 'selected' : '' }}>Sudah
+                                                            Dibayar</option>
+
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center">No Data Available</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
-
 @endsection

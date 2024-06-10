@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController\AuthController;
 use App\Http\Controllers\AdminController\CategoriesController;
+use App\Http\Controllers\AdminController\OrderController;
 use App\Http\Controllers\AdminController\ProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController\UserController;
@@ -46,3 +47,6 @@ Route::post('product/store', [ProductController::class, 'store'])->name('product
 Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('product.edit');
 Route::put('product/{product}', [ProductController::class, 'update'])->name('product.update');
 Route::delete('product/{product}', [ProductController::class, 'destroy'])->name('product.destroy');
+
+Route::get('order.index', [OrderController::class, 'index'])->name('order.index');
+Route::put('order.index/{id}', [OrderController::class, 'update'])->name('order.update');
