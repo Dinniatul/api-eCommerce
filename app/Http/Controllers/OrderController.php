@@ -11,116 +11,46 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    // public function index()
-    // {
-    //     // $orders = Order::with(['user', 'product'])->get();
-    //     // $orders->transform(function ($order) {
-    //     //     $order->subTotal = $this->formatRupiah($order->subTotal);
-    //     //     return $order;
-    //     // });
 
-    //     // return response()->json([
-    //     //     'status' => true,
-    //     //     'message' => 'Data order berhasil ditampilkan',
-    //     //     'data' => $orders
-    //     // ]);
-
-    //     $user = auth()->
-    // }
-    public function index(Request $request)
+    public function getOrderbyUserId($userId)
     {
-        // Mendapatkan pesanan berdasarkan pengguna yang membuatnya
-        $orders = Order::with(['user', 'cart.product'])->where('user_id', auth()->id())->get();
+        // Find orders belonging to the specified user ID
+        $orders = Order::with('cart')->where('user_id', $userId)->get();
 
-        // Mengonversi total pembayaran ke dalam format Rupiah
-        $orders->transform(function ($order) {
-            $order->totalPayment = $this->formatRupiah($order->totalPayment);
-            return $order;
-        });
+        if ($orders->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No orders found for this user'
+            ], 404);
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Data pesanan berhasil ditampilkan',
+            'message' => 'Orders found for the user',
             'data' => $orders
         ]);
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function showAllOrders()
     {
-        //
+        // Check if the authenticated user is an admin
+        $user = Auth::user();
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        // Find all orders
+        $orders = Order::with('cart')->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All orders retrieved successfully',
+            'data' => $orders
+        ]);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-
-    // public function store(Request $request)
-    // {
-    //     // Validate the request
-    //     $validator = Validator::make($request->all(), [
-    //         'cart_id' => 'required|array|min:1',
-    //         'cart_id.*' => 'exists:cart,id',  // Corrected here
-    //     ]);
-
-    //     // Check if the validation fails
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'errors' => $validator->errors()
-    //         ], 422);
-    //     }
-
-    //     // Retrieve the cart items
-    //     $cartItems = Cart::whereIn('id', $request->input('cart_id'))
-    //         ->where('user_id', auth()->id())
-    //         ->get();
-
-    //     if ($cartItems->isEmpty()) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'No valid cart items found'
-    //         ], 404);
-    //     }
-
-
-    //     // Calculate the total payment
-    //     $totalPayment = $cartItems->sum('totalPrice');
-
-    //     // Create a new order
-    //     $order = Order::create([
-    //         'user_id' => auth()->id(),
-    //         'cart_id' => $request->input('cart_id')[0],
-    //         'totalPayment' => $totalPayment,
-    //         'status' => 'Belum Dibayar'
-    //     ]);
-
-    //     // Attach cart items to the order
-    //     foreach ($cartItems as $cartItem) {
-    //         $cartItem->update(['order_id' => $order->id]);
-    //     }
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Order berhasil dibuat',
-    //         'data' => $order
-    //     ]);
-    // }
-
 
 
 
@@ -132,7 +62,9 @@ class OrderController extends Controller
         // Validate the request
         $validator = Validator::make($request->all(), [
             'cart' => 'required|array|min:1',
-            'cart.*' => 'exists:cart,id',  // Validate against 'carts' table
+            'cart.*' => 'exists:cart,id',
+            'methodPayment' => 'required'
+            // Validate against 'carts' table
         ]);
 
         // Check if the validation fails
@@ -167,7 +99,9 @@ class OrderController extends Controller
                 'user_id' => auth()->id(),
                 'cart_id' => $value['cart_id'], // Set the cart_id here
                 'totalPayment' => $totalPayment, // Total payment in decimal format
-                'status' => 'Belum Dibayar'
+                'status' => 'Belum Dibayar',
+                'methodPayment' => $request->methodPayment
+
             ]);
         }
 
@@ -182,74 +116,12 @@ class OrderController extends Controller
             'message' => 'Order berhasil dibuat',
             'data' => [
                 'order' => $order,
-                
+
             ]
         ]);
     }
 
 
-
-
-
-
-    // public function store(Request $request)
-    // {
-    //     $request->validate([
-    //         'cart_id' => 'required|exists:cart,id',
-    //         'status' => 'required|in:Sudah Dibayar,Belum Dibayar',
-    //     ]);
-
-    //     $user_id = Auth::id();
-
-    //     // Retrieve the cart and ensure it belongs to the authenticated user
-    //     $cart = Cart::where('id', $request->cart_id)
-    //         ->where('user_id', $user_id)
-    //         ->firstOrFail();
-
-    //     // Get the total price from the cart
-    //     $totalPayment = $cart->totalPrice;
-
-    //     // Create the order
-    //     $order = Order::create([
-    //         'user_id' => auth()->id(),
-    //         'cart_id' => $request->cart_id,
-    //         'totalPayment' => $totalPayment,
-    //         'status' => $request->status,
-    //     ]);
-
-    //     return response()->json([
-    //         'message' => 'Order created successfully',
-    //         'order' => $order,
-    //     ], 201);
-    // }
-
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Order $order)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
         $order = Order::find($id);
@@ -261,10 +133,12 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if (Auth::user()->role === 'admin') {
-            // Validasi untuk admin
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            // Validation for admin
             $validator = Validator::make($request->all(), [
-                'status' => 'required|string',
+                'status' => 'required|string|in:Sudah Dibayar,Selesai,Belum Dibayar',
             ]);
 
             if ($validator->fails()) {
@@ -283,10 +157,17 @@ class OrderController extends Controller
                 'data' => $order
             ]);
         } else {
-            // Validasi untuk pelanggan
+            // Ensure the order belongs to the authenticated user
+            if ($order->user_id !== $user->id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            // Validation for customer
             $validator = Validator::make($request->all(), [
-                'product_id' => 'required|exists:products,id',
-                'quantity' => 'required|integer|min:1',
+                'status' => 'required|string|in:Selesai',
             ]);
 
             if ($validator->fails()) {
@@ -296,31 +177,8 @@ class OrderController extends Controller
                 ], 400);
             }
 
-            $product = Product::find($request->product_id);
-
-            // Kembalikan stok sebelumnya jika quantity baru lebih kecil
-            $quantityDifference = $request->quantity - $order->quantity;
-            if ($quantityDifference < 0) {
-                $product->stock += $order->quantity - $request->quantity;
-            }
-
-            // Periksa apakah stok produk cukup untuk quantity baru
-            if ($product->stock < $quantityDifference) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Stok tidak cukup'
-                ], 400);
-            }
-
-            // Kurangi stok dengan selisih antara quantity yang baru dan lama
-            $product->stock -= $quantityDifference;
-            $product->save();
-
-            // Perbarui order
-            $order->product_id = $request->product_id;
-            $order->quantity = $request->quantity;
-            $order->subTotal = $request->quantity * $product->price;
-            $order->subTotal = $order->subTotal;
+            // Update status to "Selesai" for customer
+            $order->status = $request->status;
             $order->save();
 
             return response()->json([
@@ -330,6 +188,8 @@ class OrderController extends Controller
             ]);
         }
     }
+
+
 
 
 

@@ -14,6 +14,7 @@ class Order extends Model
         'cart_id',
         'totalPayment',
         'status',
+        'methodPayment'
     ];
 
     public function user()
