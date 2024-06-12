@@ -53,6 +53,4 @@ Route::put('order-edit/{id}', [OrderController::class, 'update'])->middleware('a
 
 Route::post('add-toCart', [CartController::class, 'addToCart'])->middleware('auth:sanctum');
 Route::delete('cart-hapus/{id}', [CartController::class, 'destroy'])->middleware('auth:sanctum');
-Route::put('editCart/{id}', [CartController::class, 'editCart'])->middleware('auth:sanctum');
 Route::get('list-cart', [CartController::class, 'index'])->middleware('auth:sanctum');
-Route::post('checkout', [CartController::class, 'checkout'])->middleware('auth:sanctum');
