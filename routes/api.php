@@ -46,8 +46,9 @@ Route::post('produk-tambah', [ProductController::class, 'store']);
 Route::put('produk-edit/{id}', [ProductController::class, 'update']);
 Route::delete('produk-hapus/{id}', [ProductController::class, 'destroy']);
 
-Route::get('order/{userId}/', 'App\Http\Controllers\OrderController@getOrderbyUserId')->middleware('auth:sanctum');
-Route::get('order/', 'App\Http\Controllers\OrderController@showAllOrders')->middleware('auth:sanctum');
+// Route::get('order/{userId}/', 'App\Http\Controllers\OrderController@getOrderbyUserId')->middleware('auth:sanctum');
+// Route::get('order/', 'App\Http\Controllers\OrderController@showAllOrders')->middleware('auth:sanctum');
+Route::get('getOrder', [OrderController::class, 'getOrder'])->middleware('auth:sanctum');
 Route::post('order-tambah', [OrderController::class, 'store'])->middleware('auth:sanctum');
 Route::put('order-edit/{id}', [OrderController::class, 'update'])->middleware('auth:sanctum');
 

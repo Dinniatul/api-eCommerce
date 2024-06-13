@@ -15,13 +15,40 @@ class CartController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    // public function index()
+    // {
+    //     // Get the authenticated user's ID
+    //     $userId = auth()->id();
+
+    //     // Retrieve the cart items for the authenticated user
+    //     $cartItems = Cart::where('user_id', $userId)->with('product')->get();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Keranjang berhasil ditampilkan',
+    //         'data' => $cartItems
+    //     ]);
+    // }
+
     public function index()
     {
         // Get the authenticated user's ID
         $userId = auth()->id();
 
-        // Retrieve the cart items for the authenticated user
-        $cartItems = Cart::where('user_id', $userId)->with('product')->get();
+        // Retrieve cart IDs that are already selected in orders
+        $orderedCartIds = Order::where('user_id', $userId)
+            ->pluck('cart_id')
+            ->map(function ($cartIds) {
+                return explode(',', $cartIds);
+            })
+            ->flatten()
+            ->toArray();
+
+        // Retrieve the cart items for the authenticated user that are not in the ordered cart IDs
+        $cartItems = Cart::where('user_id', $userId)
+            ->whereNotIn('id', $orderedCartIds)
+            ->with('product')
+            ->get();
 
         return response()->json([
             'status' => true,
