@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
@@ -55,3 +56,7 @@ Route::put('order-edit/{id}', [OrderController::class, 'update'])->middleware('a
 Route::post('add-toCart', [CartController::class, 'addToCart'])->middleware('auth:sanctum');
 Route::delete('cart-hapus/{id}', [CartController::class, 'destroy'])->middleware('auth:sanctum');
 Route::get('list-cart', [CartController::class, 'index'])->middleware('auth:sanctum');
+
+Route::post('favorite-tambah', [FavoriteController::class, 'store'])->middleware('auth:sanctum');
+Route::get('listFavorite', [FavoriteController::class, 'getFavorite'])->middleware('auth:sanctum');
+Route::delete('favorite-delete/{id}', [FavoriteController::class, 'destroy'])->middleware('auth:sanctum');
