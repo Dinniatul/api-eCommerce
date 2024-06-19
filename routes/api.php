@@ -65,4 +65,6 @@ Route::get('list-cart', [CartController::class, 'index'])->middleware('auth:sanc
 
 Route::post('favorite-tambah', [FavoriteController::class, 'store'])->middleware('auth:sanctum');
 Route::get('listFavorite', [FavoriteController::class, 'getFavorite'])->middleware('auth:sanctum');
-Route::delete('favorite-delete/{id}', [FavoriteController::class, 'destroy'])->middleware('auth:sanctum');
+// Route::delete('favorite-delete/{id}', [FavoriteController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('favorite-delete/{product_id}', [FavoriteController::class, 'destroy'])->middleware('auth:sanctum');
+Route::get('favorite-check', [FavoriteController::class, 'check'])->middleware('auth:sanctum');
