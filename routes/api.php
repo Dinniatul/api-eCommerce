@@ -35,6 +35,10 @@ Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::put('user-update/{id}', [AuthController::class, 'updateUser']);
 
+Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
+Route::put('update-user/{id}', [AuthController::class, 'updateUser']);
+
 // rute untuk OTP
 Route::post('/send-verification-code', [AuthController::class, 'sendOTPEmail']);
 Route::post('/verify-code', [AuthController::class, 'verifyOTP']);

@@ -162,6 +162,45 @@ class AuthController extends Controller
     }
 
 
+    // public function login(Request $request)
+    // {
+    //     $rules = [
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ];
+
+    //     $validator = Validator::make($request->all(), $rules);
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => "Login gagal",
+    //             'data' => $validator->errors()
+    //         ], 401);
+    //     }
+
+    //     if (!Auth::attempt($request->only(['email', 'password']))) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Email dan password tidak sesuai'
+    //         ], 401);
+    //     }
+
+    //     $user = User::where('email', $request->email)->first();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Berhasil login',
+    //         'email' => $user->email,
+    //         'token' => $user->createToken('api-eCommerce')->plainTextToken,
+    //         'role' => $user->role, // Ambil peran pengguna dari objek $user
+    //         'username' => $user->username,
+    //         'first_name' => $user->first_name,
+    //         'last_name' => $user->last_name,
+    //         'address' => $user->address,
+    //         'phone' => $user->phone,
+    //         'id' => $user->id,
+    //     ]);
+    // }
     public function login(Request $request)
     {
         $rules = [
@@ -178,14 +217,28 @@ class AuthController extends Controller
             ], 401);
         }
 
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email tidak ditemukan'
+            ], 401);
+        }
+
+        if (!$user->email_verified_at) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email belum diverifikasi. Silahkan cek email Anda untuk kode OTP.'
+            ], 401);
+        }
+
         if (!Auth::attempt($request->only(['email', 'password']))) {
             return response()->json([
                 'status' => false,
                 'message' => 'Email dan password tidak sesuai'
             ], 401);
         }
-
-        $user = User::where('email', $request->email)->first();
 
         return response()->json([
             'status' => true,
@@ -201,6 +254,7 @@ class AuthController extends Controller
             'id' => $user->id,
         ]);
     }
+
 
 
     public function logout(Request $request)
@@ -248,38 +302,90 @@ class AuthController extends Controller
         ]);
     }
 
-    protected function sendEmailApprove($view, $subject, $targetName, $targetEmail)
-    {
-        Mail::send($view, ['subject' => $subject, 'targetName' => $targetName], function ($message) use ($subject, $targetName, $targetEmail) {
-            $message->to($targetEmail, $targetName)
-                ->subject($subject);
-            $message->from('no-reply@yaruki-app.com', 'Yaruki APP');
-        });
 
-        if (count(Mail::failures()) > 0) {
-            $json['STATUS'] = 400;
-            $json['MESSAGE'] = 'FAILED TO SEND EMAIL';
-        } else {
-            $json['STATUS'] = 200;
-            $json['MESSAGE'] = 'EMAIL SENT SUCCESSFULLY!';
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Permintaan reset password gagal',
+                'data' => $validator->errors()
+            ], 400);
         }
 
-        return $json;
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email tidak ditemukan'
+            ], 404);
+        }
+
+        $token = Str::random(60);
+        $user->reset_password_token = $token;
+        $user->reset_password_expires_at = Carbon::now()->addMinutes(30);
+        $user->save();
+
+        $this->sendResetPasswordEmail($user, $token);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Permintaan reset password berhasil, silahkan cek email Anda',
+        ]);
     }
 
-
-    protected function generateEmail($subject, $target)
+    protected function sendResetPasswordEmail($user, $token)
     {
-        return [
-            'subject' => $subject,
-            'from' => [
-                'name' => 'Yaruki APP',
-                'email' => 'no-reply@yaruki-app.com'
-            ],
-            'target' => [
-                'name' => $target->name,
-                'email' => $target->email,
-            ]
+        $data = [
+            'name' => $user->first_name,
+            'token' => $token,
         ];
+
+        Mail::send('emails.reset_password', $data, function ($message) use ($user) {
+            $message->to($user->email, $user->first_name)
+                ->subject('Reset Password Anda');
+            $message->from('no-reply@enchantebeuty.com', 'Enchante Beuty');
+        });
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Reset password gagal',
+                'data' => $validator->errors()
+            ], 400);
+        }
+
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user || $user->reset_password_token !== $request->input('token') || Carbon::now()->greaterThan($user->reset_password_expires_at)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Token reset password tidak valid atau telah kadaluarsa'
+            ], 400);
+        }
+
+        $user->password = Hash::make($request->input('password'));
+        $user->reset_password_token = null;
+        $user->reset_password_expires_at = null;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password berhasil direset',
+        ]);
     }
 }
