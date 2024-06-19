@@ -16,10 +16,11 @@ class CreateOrdersTable extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->onDelete('cascade');
-            $table->unsignedBigInteger('cart_id')->onDelete('cascade');
+            $table->text('cart_id')->onDelete('cascade');
             // $table->integer('quantity');
             $table->decimal('totalPayment', 10, 3);
-            $table->enum('status', ['Sudah Dibayar', 'Belum Dibayar']);
+            $table->enum('status', ['Belum Dibayar', 'Sudah Dibayar', 'Selesai']);
+            $table->enum('methodPayment', ['Cash']);
             $table->timestamps();
         });
     }

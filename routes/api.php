@@ -34,8 +34,10 @@ Route::get('/', function () {
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::put('user-update/{id}', [AuthController::class, 'updateUser']);
-Route::post('/send-verification-code', [AuthController::class, 'sendVerificationCode']);
-Route::post('/verify-code', [AuthController::class, 'verifyCode']);
+
+// rute untuk OTP
+Route::post('/send-verification-code', [AuthController::class, 'sendOTPEmail']);
+Route::post('/verify-code', [AuthController::class, 'verifyOTP']);
 
 Route::get('category', [CategoriesController::class, 'index']);
 Route::post('category-tambah', [CategoriesController::class, 'store']);

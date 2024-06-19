@@ -23,7 +23,9 @@ class CreateUsersTable extends Migration
             $table->string('last_name')->nullable();
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->enum('role',['admin','customer'])->nullable();
+            $table->enum('role', ['admin', 'customer'])->nullable();
+            $table->string('otp')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -36,6 +38,9 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('otp');
+            $table->dropColumn('otp_expires_at');
+        });
     }
 }

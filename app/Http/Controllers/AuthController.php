@@ -7,48 +7,59 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+
+
     // public function register(Request $request)
     // {
-    //     $request->validate([
-    //         'username' => 'required|string|max:255|unique:users',
-    //         'email' => 'required|string|email|max:255|unique:users',
-    //         'password' => 'required|string|min:8',
-    //         'first_name' => 'string|max:255|nullable',
-    //         'last_name' => 'string|max:255|nullable',
-    //         'phone' => 'string|max:20|nullable',
-    //         'address' => 'string|nullable',
+    //     $validator = Validator::make($request->all(), [
+    //         'username' => 'required|unique:users',
+    //         'email' => 'required|unique:users',
+    //         'password' => 'required|min:8',
+    //         'first_name' => 'required',
+    //         'last_name' => 'required',
+    //         'phone' => 'required',
+    //         'address' => 'required',
+    //         'role' => 'nullable'
+    //     ], [
+    //         'username.required' => 'Username tidak boleh kosong',
+    //         'username.unique' => 'Username sudah ada, silahkan buat username yang lain',
+    //         'email.unique' => 'Email sudah digunakan, silahkan gunakan email yang lain',
+    //         'password.required' => ' Password tidak boleh kosong',
+    //         'password.min' => 'Password minimal 8 karakter',
+
     //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Register gagal',
+    //             'data' => $validator->errors()
+    //         ], 400);
+    //     }
 
     //     $user = User::create([
-    //         'username' => $request->username,
-    //         'email' => $request->email,
+    //         'username' => $request->input('username'),
+    //         'email' => $request->input('email'),
     //         'password' => Hash::make($request->password),
-    //         'first_name' => $request->first_name,
-    //         'last_name' => $request->last_name,
-    //         'phone' => $request->phone,
-    //         'address' => $request->address,
-    //         'role' => 'customer',  // default to customer
-    //         'email_verified_at' => Carbon::now(),  // Set email verified at registration
+    //         'first_name' => $request->input('first_name'),
+    //         'last_name' => $request->input('last_name'),
+    //         'phone' => $request->input('phone'),
+    //         'address' => $request->input('address'),
+    //         'role' => 'customer',
     //     ]);
-
-    //     Auth::login($user);
 
     //     return response()->json([
-    //         'message' => 'User registered successfully',
-    //         'user' => $user,
+    //         'status' => true,
+    //         'message' => 'Registrasi berhasil, silahkan login',
+    //         'data' => $user,
     //     ]);
     // }
-
-    // public function getUser(){
-    //     if(Auth::user()->role == 'customer'){
-    //         $user = User::where()
-    //     }
-    // }
-
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -64,9 +75,8 @@ class AuthController extends Controller
             'username.required' => 'Username tidak boleh kosong',
             'username.unique' => 'Username sudah ada, silahkan buat username yang lain',
             'email.unique' => 'Email sudah digunakan, silahkan gunakan email yang lain',
-            'password.required' => ' Password tidak boleh kosong',
+            'password.required' => 'Password tidak boleh kosong',
             'password.min' => 'Password minimal 8 karakter',
-
         ]);
 
         if ($validator->fails()) {
@@ -88,12 +98,69 @@ class AuthController extends Controller
             'role' => 'customer',
         ]);
 
+        $otp = Str::random(6); // Menggunakan Str untuk generate OTP
+        $user->otp = $otp;
+        $user->otp_expires_at = Carbon::now()->addMinutes(10);
+        $user->save();
+
+        $this->sendOTPEmail($user);
+
         return response()->json([
             'status' => true,
-            'message' => 'Registrasi berhasil, silahkan login',
+            'message' => 'Registrasi berhasil, cek email Anda untuk kode OTP',
             'data' => $user,
         ]);
     }
+
+    protected function sendOTPEmail($user)
+    {
+        $data = [
+            'name' => $user->first_name,
+            'otp' => $user->otp
+        ];
+
+        Mail::send('emails.otp', $data, function ($message) use ($user) {
+            $message->to($user->email, $user->first_name)
+                ->subject('Kode OTP Anda');
+            $message->from('no-reply@enchantebeuty.com', 'Enchante Beuty');
+        });
+    }
+
+    public function verifyOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Verifikasi OTP gagal',
+                'data' => $validator->errors()
+            ], 400);
+        }
+
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user || $user->otp !== $request->input('otp') || Carbon::now()->greaterThan($user->otp_expires_at)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP tidak valid atau telah kadaluarsa'
+            ], 400);
+        }
+
+        $user->otp = null;
+        $user->otp_expires_at = null;
+        $user->email_verified_at = Carbon::now();
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Email berhasil diverifikasi'
+        ]);
+    }
+
 
     public function login(Request $request)
     {
@@ -179,5 +246,40 @@ class AuthController extends Controller
             'message' => 'User berhasil diperbaharui',
             'data' => $user,
         ]);
+    }
+
+    protected function sendEmailApprove($view, $subject, $targetName, $targetEmail)
+    {
+        Mail::send($view, ['subject' => $subject, 'targetName' => $targetName], function ($message) use ($subject, $targetName, $targetEmail) {
+            $message->to($targetEmail, $targetName)
+                ->subject($subject);
+            $message->from('no-reply@yaruki-app.com', 'Yaruki APP');
+        });
+
+        if (count(Mail::failures()) > 0) {
+            $json['STATUS'] = 400;
+            $json['MESSAGE'] = 'FAILED TO SEND EMAIL';
+        } else {
+            $json['STATUS'] = 200;
+            $json['MESSAGE'] = 'EMAIL SENT SUCCESSFULLY!';
+        }
+
+        return $json;
+    }
+
+
+    protected function generateEmail($subject, $target)
+    {
+        return [
+            'subject' => $subject,
+            'from' => [
+                'name' => 'Yaruki APP',
+                'email' => 'no-reply@yaruki-app.com'
+            ],
+            'target' => [
+                'name' => $target->name,
+                'email' => $target->email,
+            ]
+        ];
     }
 }
