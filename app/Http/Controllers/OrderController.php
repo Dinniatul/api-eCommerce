@@ -74,9 +74,13 @@ class OrderController extends Controller
             $cartDetails[] = [
                 'cart_id' => $cart->id,
                 'product_id' => $cart->product_id,
+                'product_name' => $cart->product->product_name,
                 'quantity' => $cart->quantity,
                 'totalPrice' => $cart->totalPrice,
                 // Add any other desired information
+                'image' => $cart->product->image,
+                'description' => $cart->product->description,
+                'price' => $cart->product->price,
             ];
         }
 

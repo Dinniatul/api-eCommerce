@@ -61,9 +61,36 @@ class FavoriteController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function check(Request $request)
     {
-        $favorite = Favorite::where('user_id', auth()->id())->where('id', $id)->first();
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengecek produk favorit',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        $isFavorite = Favorite::where('user_id', auth()->id())
+                            ->where('product_id', $request->product_id)
+                            ->exists();
+
+        return response()->json([
+            'status' => true,
+            'isFavorite' => $isFavorite
+        ]);
+    }
+
+    public function destroy($product_id)
+    {
+        // $favorite = Favorite::where('user_id', auth()->id())->where('id', $id)->first();
+        $favorite = Favorite::where('user_id', auth()->id())
+                        ->where('product_id', $product_id)
+                        ->first();
 
         if (!$favorite) {
             return response()->json([
