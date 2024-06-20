@@ -302,17 +302,19 @@ class AuthController extends Controller
         ]);
     }
 
-
-    public function forgotPassword(Request $request)
+    public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ],[
+            'email.required' => 'Email tidak boleh kosong'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Permintaan reset password gagal',
+                'message' => 'Reset password gagal',
                 'data' => $validator->errors()
             ], 400);
         }
@@ -326,61 +328,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $token = Str::random(60);
-        $user->reset_password_token = $token;
-        $user->reset_password_expires_at = Carbon::now()->addMinutes(30);
-        $user->save();
-
-        $this->sendResetPasswordEmail($user, $token);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Permintaan reset password berhasil, silahkan cek email Anda',
-        ]);
-    }
-
-    protected function sendResetPasswordEmail($user, $token)
-    {
-        $data = [
-            'name' => $user->first_name,
-            'token' => $token,
-        ];
-
-        Mail::send('emails.reset_password', $data, function ($message) use ($user) {
-            $message->to($user->email, $user->first_name)
-                ->subject('Reset Password Anda');
-            $message->from('no-reply@enchantebeuty.com', 'Enchante Beuty');
-        });
-    }
-
-    public function resetPassword(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'token' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Reset password gagal',
-                'data' => $validator->errors()
-            ], 400);
-        }
-
-        $user = User::where('email', $request->input('email'))->first();
-
-        if (!$user || $user->reset_password_token !== $request->input('token') || Carbon::now()->greaterThan($user->reset_password_expires_at)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Token reset password tidak valid atau telah kadaluarsa'
-            ], 400);
-        }
-
         $user->password = Hash::make($request->input('password'));
-        $user->reset_password_token = null;
-        $user->reset_password_expires_at = null;
         $user->save();
 
         return response()->json([
