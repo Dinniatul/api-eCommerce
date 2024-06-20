@@ -336,4 +336,35 @@ class AuthController extends Controller
             'message' => 'Password berhasil direset',
         ]);
     }
+
+    public function checkEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ], [
+            'email.required' => 'Email tidak boleh kosong'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'data' => $validator->errors()
+            ], 400);
+        }
+
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Email ditemukan',
+        ]);
+    }
 }

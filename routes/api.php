@@ -36,6 +36,8 @@ Route::post('login', [AuthController::class, 'login']);
 Route::put('user-update/{id}', [AuthController::class, 'updateUser']);
 
 Route::post('reset-password', [AuthController::class, 'resetPassword']);
+Route::post('check-email', [AuthController::class, 'checkEmail']);
+
 Route::put('update-user/{id}', [AuthController::class, 'updateUser']);
 
 // rute untuk OTP
