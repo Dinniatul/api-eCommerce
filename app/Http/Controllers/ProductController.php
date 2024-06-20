@@ -79,15 +79,18 @@ class ProductController extends Controller
         }
 
         $image = $request->file('image');
-        $nama_file = time() . '_' . $image->getClientOriginalName();
-        $lokasi_file = public_path('/public/images');
+        // $nama_file = time() . '_' . $image->getClientOriginalName();
+        $nama_file = $image->getClientOriginalName();
+        // $lokasi_file = public_path('/public/images');
+        $lokasi_file = public_path('/image');
         $image->move($lokasi_file, $nama_file);
 
 
 
         $products = Product::create([
             'product_name' => $request->input('product_name'),
-            'image' => public_path('images/' . $nama_file),
+            // 'image' => public_path('images/' . $nama_file),
+            'image' => $nama_file,
             'description' => $request->input('description'),
             'price' => $request->input('price'),
             'stock' => $request->input('stock'),
@@ -188,7 +191,7 @@ class ProductController extends Controller
         ]);
     }
 
-    
+
 
     /**
      * Remove the specified resource from storage.
