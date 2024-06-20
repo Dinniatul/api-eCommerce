@@ -122,7 +122,7 @@ class AuthController extends Controller
         Mail::send('emails.otp', $data, function ($message) use ($user) {
             $message->to($user->email, $user->first_name)
                 ->subject('Kode OTP Anda');
-            $message->from('no-reply@enchantebeuty.com', 'Enchante Beuty');
+            $message->from('no-reply@enchantebeuty.com', 'Enchanté Beauty');
         });
     }
 
